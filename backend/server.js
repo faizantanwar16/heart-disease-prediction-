@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -34,4 +35,13 @@ app.get("/", (req, res) => {
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
+=======
+require("dotenv").config();
+const app = require("./src/app");
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`HeartGuard server running on http://localhost:${PORT}`);
+>>>>>>> ccfdfb6 (WIP: local changes before merging remote)
 });
