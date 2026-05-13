@@ -1,97 +1,30 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
+import axios from "axios";
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
+const API = axios.create({
+    baseURL: "http://localhost:5000/api",
+});
 
-export const registerUser = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-};
+// Attach JWT token to every request automatically
+API.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
-export const loginUser = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-};
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export const registerUser = (data) => API.post("/auth/register", data);
+export const loginUser    = (data) => API.post("/auth/login", data);
 
-// ─── User ─────────────────────────────────────────────────────────────────────
+// ── Prediction ────────────────────────────────────────────────────────────────
+export const runPrediction       = (data) => API.post("/predict", data);
+export const getPredictionHistory = ()    => API.get("/predict/history");
 
-export const getUserProfile = async () => {
-  const res = await fetch(`${BASE_URL}/api/user/profile`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  return res.json();
-};
+// ── Vitals ────────────────────────────────────────────────────────────────────
+export const logVitals  = (data) => API.post("/vitals", data);
+export const getVitals  = ()     => API.get("/vitals");
 
-export const updateUserProfile = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/user/profile`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-};
-
-// ─── Vitals ───────────────────────────────────────────────────────────────────
-
-export const logVitals = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/vitals`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-};
-
-export const getVitals = async () => {
-  const res = await fetch(`${BASE_URL}/api/vitals`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  return res.json();
-};
-
-// ─── Predictions ──────────────────────────────────────────────────────────────
-
-export const getPredictionHistory = async () => {
-  const res = await fetch(`${BASE_URL}/api/predict/history`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  return res.json();
-};
-
-export const runPrediction = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/predict`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-};
-
-// ─── Token Helpers ────────────────────────────────────────────────────────────
-
-export const saveToken = (token) => localStorage.setItem("hg_token", token);
-export const getToken  = ()      => localStorage.getItem("hg_token");
-export const removeToken = ()    => localStorage.removeItem("hg_token");
-
-export const saveUser = (user) => localStorage.setItem("hg_user", JSON.stringify(user));
-export const getUser  = ()     => JSON.parse(localStorage.getItem("hg_user") || "null");
-export const removeUser = ()   => localStorage.removeItem("hg_user");
-
-export const logout = () => { removeToken(); removeUser(); };
-export const isLoggedIn = () => !!getToken();
+// ── User ──────────────────────────────────────────────────────────────────────
+export const getUserProfile    = ()     => API.get("/user/profile");
+export const updateUserProfile = (data) => API.put("/user/profile", data);
