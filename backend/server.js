@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 
 // Routes
@@ -9,7 +11,8 @@ import predictRoutes from "./routes/predict.js";
 import vitalsRoutes from "./routes/vitals.js";
 import userRoutes from "./routes/user.js";
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, ".env") });
 connectDB();
 
 const app = express();

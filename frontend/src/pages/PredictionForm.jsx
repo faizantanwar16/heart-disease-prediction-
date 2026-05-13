@@ -1,7 +1,16 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-// import { logout } from "../services/api";
+import { runPrediction } from "../services/api";
 import Sidebar from "../components/Sidebar";
+
+function predictionErrorMessage(err) {
+  const data = err.response?.data;
+  if (typeof data?.message === "string") return data.message;
+  if (typeof data?.error === "string") return data.error;
+  if (err.message === "Network Error") {
+    return "Cannot reach the server. Make sure the API is running (e.g. localhost:5000).";
+  }
+  return err.message || "Prediction failed. Please try again.";
+}
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -178,6 +187,9 @@ export default function PredictionForm() {
   const [focused, setFocused] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult]   = useState(null);
+  const [modelLabel, setModelLabel] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [error, setError]     = useState("");
 
   const set  = (field) => (val) => setForm((f) => ({ ...f, [field]: val }));
   const foc  = (field) => () => setFocused(field);
@@ -199,34 +211,88 @@ export default function PredictionForm() {
   const total = 17;
   const pct   = Math.round((filledCount / total) * 100);
 
-  const handlePredict = () => {
-    if (filledCount < total) return;
-    setLoading(true);
-    setResult(null);
-    setTimeout(() => {
-      let score = 20;
-      if (form.smoking === "1")               score += 12;
-      if (form.alcoholDrinking === "1")       score += 6;
-      if (form.stroke === "1")                score += 18;
-      if (parseInt(form.physicalHealth) > 15) score += 8;
-      if (parseInt(form.mentalHealth)   > 15) score += 5;
-      if (form.diffWalking === "1")           score += 7;
-      if (form.diabetic === "Yes")            score += 10;
-      if (form.diabetic === "Borderline diabetes") score += 6;
-      if (form.physicalActivity === "0")      score += 5;
-      if (form.genHealth === "Poor")          score += 10;
-      if (form.genHealth === "Fair")          score += 6;
-      if (form.asthma === "1")                score += 4;
-      if (form.kidneyDisease === "1")         score += 8;
-      if (bmi && parseFloat(bmi) > 30)        score += 7;
-      if (parseInt(form.sleepTime) < 6)       score += 4;
-      score = Math.min(95, Math.max(8, score));
-      setResult(score);
-      setLoading(false);
-    }, 1800);
-  };
+  const buildPredictionPayload = () => ({
+    height: Number(form.height),
+    weight: Number(form.weight),
+    smoking: form.smoking,
+    alcoholDrinking: form.alcoholDrinking,
+    stroke: form.stroke,
+    physicalHealth: Number(form.physicalHealth),
+    mentalHealth: Number(form.mentalHealth),
+    diffWalking: form.diffWalking,
+    sex: form.sex,
+    ageCategory: form.ageCategory,
+    race: form.race,
+    diabetic: form.diabetic,
+    physicalActivity: form.physicalActivity,
+    genHealth: form.genHealth,
+    sleepTime: Number(form.sleepTime),
+    asthma: form.asthma,
+    kidneyDisease: form.kidneyDisease,
+    skinCancer: form.skinCancer,
+  });
 
-  const handleReset = () => { setForm(initialForm); setResult(null); };
+  // const handlePredict = async () => {
+  //   if (filledCount < total) return;
+  //   setLoading(true);
+  //   setResult(null);
+  //   setModelLabel(null);
+  //   setErrorMessage(null);
+  //   try {
+  //     const { data } = await runPrediction(buildPredictionPayload());
+  //     const prob = typeof data.probability === "number" ? data.probability : 0;
+  //     setResult(Math.round(prob * 100));
+  //     setModelLabel(typeof data.result === "string" ? data.result : null);
+  //   } catch (err) {
+  //     setErrorMessage(predictionErrorMessage(err));
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+const handlePredict = async () => {
+  if (filledCount < total) return;
+  setLoading(true);
+  setResult(null);
+  setError("");
+  try {
+    const payload = {
+      BMI:              parseFloat(bmi),
+      Smoking:          parseInt(form.smoking),
+      AlcoholDrinking:  parseInt(form.alcoholDrinking),
+      Stroke:           parseInt(form.stroke),
+      PhysicalHealth:   parseFloat(form.physicalHealth),
+      MentalHealth:     parseFloat(form.mentalHealth),
+      DiffWalking:      parseInt(form.diffWalking),
+      Sex:              form.sex === "1" ? "Male" : "Female",
+      AgeCategory:      form.ageCategory,
+      Race:             form.race,
+      Diabetic:         form.diabetic,
+      PhysicalActivity: parseInt(form.physicalActivity),
+      GenHealth:        form.genHealth,
+      SleepTime:        parseFloat(form.sleepTime),
+      Asthma:           parseInt(form.asthma),
+      KidneyDisease:    parseInt(form.kidneyDisease),
+      SkinCancer:       parseInt(form.skinCancer),
+    };
+    const res  = await runPrediction(payload);
+    const data = res.data;
+    if (data?.probability !== undefined) {
+      setResult(Math.round(data.probability * 100));
+    } else {
+      setError(data?.message || "Prediction failed. Please try again.");
+    }
+  } catch {
+    setError("Cannot connect to server. Please check your connection.");
+  } finally {
+    setLoading(false);
+  }
+};
+  const handleReset = () => {
+    setForm(initialForm);
+    setResult(null);
+    setModelLabel(null);
+    setErrorMessage(null);
+  };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F9FAFB", fontFamily: "'Inter', sans-serif" }}>
@@ -394,6 +460,24 @@ export default function PredictionForm() {
               </div>
             </div>
 
+            {errorMessage && (
+              <div
+                role="alert"
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  background: "#FFF5F5",
+                  border: "1px solid #FECDD3",
+                  color: "#991B1B",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  lineHeight: 1.5,
+                }}
+              >
+                {errorMessage}
+              </div>
+            )}
+
             {/* Submit */}
             <button onClick={handlePredict} disabled={filledCount < total || loading}
               style={{ width: "100%", padding: "15px", background: filledCount === total && !loading ? "linear-gradient(135deg, #C0182B 0%, #8B0000 100%)" : "#E5E7EB", color: filledCount === total && !loading ? "white" : "#9CA3AF", border: "none", borderRadius: 12, fontWeight: 800, fontSize: 16, cursor: filledCount === total && !loading ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: filledCount === total && !loading ? "0 4px 20px rgba(192,24,43,0.3)" : "none", transition: "all 0.25s", fontFamily: "Inter, sans-serif", letterSpacing: "0.01em" }}
@@ -421,6 +505,11 @@ export default function PredictionForm() {
               {result !== null ? (
                 <div style={{ animation: "popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275)" }}>
                   <RiskGauge score={result}/>
+                  {modelLabel && (
+                    <p style={{ margin: "10px 0 0", fontSize: 12, color: "#6B7280", fontWeight: 600 }}>
+                      Model output: <span style={{ color: "#1F2937" }}>{modelLabel}</span>
+                    </p>
+                  )}
                 </div>
               ) : loading ? (
                 <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>

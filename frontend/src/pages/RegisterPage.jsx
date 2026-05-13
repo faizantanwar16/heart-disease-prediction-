@@ -111,33 +111,36 @@ export default function RegisterPage() {
   setError("");
 
   try {
-    const data = await registerUser({
+    const response = await registerUser({
       name: form.name,
       email: form.email,
       password: form.password,
     });
 
-    console.log(data); // 🔍 DEBUG
+    const data = response.data;
 
     if (data.token) {
       saveToken(data.token);
-
       saveUser({
-          name: data.name,
-           email: data.email,
-          id: data._id,
-        });
+        name: data.name,
+        email: data.email,
+        id: data._id,
+      });
       setUserName(data.name);
       setSubmitted(true);
     } else {
       setError(data.message || "Registration failed. Please try again.");
     }
-  } catch {
-    setError("Cannot connect to server. Make sure backend is running.");
+  } catch (err) {
+    setError(
+      err.response?.data?.message ||
+      "Cannot connect to server. Make sure backend is running."
+    );
   } finally {
     setLoading(false);
   }
 };
+
 
   const inputStyle = (field) => ({
     width: "100%",
@@ -449,4 +452,4 @@ export default function RegisterPage() {
       `}</style>
     </div>
   );
-}
+}  

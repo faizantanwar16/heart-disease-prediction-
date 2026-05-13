@@ -22,7 +22,7 @@ const navItems = [
   { id: "dashboard", label: "Dashboard",      path: "/dashboard" },
   { id: "predict",   label: "New Prediction", path: "/predict"   },
   { id: "history",   label: "History",        path: "/history"   },
-  { id: "vitals",    label: "Vitals Tracker", path: "/vitals"    },
+  // { id: "vitals",    label: "Vitals Tracker", path: "/vitals"    },
   { id: "wearable",  label: "Wearable Sync",  path: "/wearable"  },
   { id: "profile",   label: "Profile",        path: "/profile"   },
 ];
@@ -31,7 +31,7 @@ const NavIcon = ({ id, size, color }) => {
   if (id === "dashboard") return <GridIcon size={size} color={color}/>;
   if (id === "predict")   return <ActivityIcon size={size} color={color}/>;
   if (id === "history")   return <ClockIcon size={size} color={color}/>;
-  if (id === "vitals")    return <DropletIcon size={size} color={color}/>;
+  // if (id === "vitals")    return <DropletIcon size={size} color={color}/>;
   if (id === "wearable")  return <WatchIcon size={size} color={color}/>;
   if (id === "profile")   return <UserIcon size={size} color={color}/>;
 };

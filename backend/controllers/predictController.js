@@ -32,6 +32,14 @@ export const runPrediction = async (req, res) => {
         .status(503)
         .json({ message: "ML service is unavailable. Please try again later." });
     }
+    const mlBody = error.response?.data;
+    const mlMessage =
+      (typeof mlBody?.error === "string" && mlBody.error) ||
+      (typeof mlBody?.message === "string" && mlBody.message) ||
+      null;
+    if (mlMessage) {
+      return res.status(error.response.status || 502).json({ message: mlMessage });
+    }
     res.status(500).json({ message: error.message });
   }
 };

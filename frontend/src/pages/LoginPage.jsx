@@ -89,7 +89,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const data = await loginUser({ email: form.email, password: form.password });
+      const { data } = await loginUser({ email: form.email, password: form.password });
 
       if (data.token) {
         saveToken(data.token);
