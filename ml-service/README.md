@@ -55,4 +55,4 @@ python app.py
 The API loads `cardiosense_model.pkl`, `scaler.pkl`, `encoders.pkl`, and `feature_columns.pkl` at startup, applies the same preprocessing used during training to incoming requests, and returns a risk probability along with a Low/Moderate/High risk label.
 
 ---
-*This ML microservice was built and trained by [@GitTheMoin](https://github.com/GitTheMoin) as part of the CardioSense project.*
+*This ML microservice was built and trained by [@GitTheMoin](https://github.com/GitTheMoin) as part of the HeartGuard project.*
